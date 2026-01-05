@@ -1,4 +1,4 @@
-# @rbxts/z
+# @rbxts/ty
 
 Type validation with detailed errors.
 
@@ -7,7 +7,7 @@ Alternative to `@rbxts/t`.
 ## Basics
 
 ```ts
-import z from "@rbxts/z";
+import z from "@rbxts/ty";
 
 {
   const result = z.string("hello!");
@@ -24,7 +24,7 @@ import z from "@rbxts/z";
 ## Literals
 
 ```ts
-import z from "@rbxts/z";
+import z from "@rbxts/ty";
 
 const abcGuard = z.literal("abc");
 {

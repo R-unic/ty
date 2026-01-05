@@ -14,7 +14,7 @@
     "@rbxts/compiler-types": "^3.0.0-types.0",
     "@rbxts/runit": "^1.4.4",
     "@rbxts/types": "^1.0.813",
-    "@rbxts/z": "file:../out",
+    "@rbxts/ty": "file:../out",
     "roblox-ts": "^3.0.0",
     "typescript": "=5.5.3"
   },

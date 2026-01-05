@@ -16,7 +16,6 @@ const nan = guard(
   }
 );
 
-
 function literal<T extends LiteralBase>(literalValue: T): Guard<T> {
   const typeName = typeIs(literalValue, "string") ? '"' + literalValue + '"' : tostring(literalValue);
   const primitiveType = typeOf(literalValue) as keyof typeof primitiveGuards;
@@ -104,7 +103,7 @@ function object<T extends Record<IndexType, Guard<any>>, Name extends string>(gu
   );
 }
 
-const z = {
+const ty = {
   ...primitiveGuards,
   nan,
   range,
@@ -113,6 +112,6 @@ const z = {
   union,
   object
 };
-table.freeze(z);
+table.freeze(ty);
 
-export = z;
+export = ty;

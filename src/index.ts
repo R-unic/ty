@@ -1,4 +1,4 @@
-import z from "./z";
+import ty from "./ty";
 
 export * from "./types";
-export default z;
+export default ty;

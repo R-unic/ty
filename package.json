@@ -1,5 +1,5 @@
 {
-  "name": "@rbxts/z",
+  "name": "@rbxts/ty",
   "version": "1.0.0",
   "main": "out/init.lua",
   "scripts": {
@@ -12,7 +12,7 @@
     "type",
     "validation",
     "t",
-    "z",
+    "ty",
     "roblox-ts"
   ],
   "author": "runicly",

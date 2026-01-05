@@ -1,5 +1,5 @@
 import { Assert, Fact } from "@rbxts/runit";
-import z, { ValidationResult } from "@rbxts/z";
+import ty, { ValidationResult } from "@rbxts/ty";
 
 function assertSuccessValue<T>(result: ValidationResult<T>, value: T): void {
   Assert.true(result.success);
@@ -19,11 +19,11 @@ function assertSingleError(result: ValidationResult<unknown>, expectedTypeName: 
   Assert.equal(`Expected '${expectedTypeName}', got: ${expectedValueText}${pathText}`, result.errors[0].message);
 }
 
-class ZTest {
+class TyTest {
   @Fact
   public object(): void {
-    const guard = z.object({
-      foo: z.string
+    const guard = ty.object({
+      foo: ty.string
     }, "Foo");
 
     const validResult = guard({ foo: "bar" });
@@ -36,12 +36,12 @@ class ZTest {
 
   @Fact
   public intersection(): void {
-    const guard = z.intersection(
-      z.object({
-        a: z.string
+    const guard = ty.intersection(
+      ty.object({
+        a: ty.string
       }, "Foo"),
-      z.object({
-        b: z.number
+      ty.object({
+        b: ty.number
       }, "Bar")
     );
 
@@ -64,7 +64,7 @@ class ZTest {
 
   @Fact
   public union(): void {
-    const guard = z.union(z.number, z.boolean);
+    const guard = ty.union(ty.number, ty.boolean);
     const validResult = guard(69);
     const validResult2 = guard(true);
     const invalidResult = guard("abc");
@@ -75,7 +75,7 @@ class ZTest {
 
   @Fact
   public range(): void {
-    const guard = z.range(0, 100);
+    const guard = ty.range(0, 100);
     const validResult = guard(69);
     const invalidResult = guard(255);
     assertSuccessValue(validResult, 69);
@@ -84,7 +84,7 @@ class ZTest {
 
   @Fact
   public literal(): void {
-    const abcGuard = z.literal("abc");
+    const abcGuard = ty.literal("abc");
     const validResult = abcGuard("abc");
     const invalidResult = abcGuard(69);
     assertSuccessValue(validResult, "abc");
@@ -94,8 +94,8 @@ class ZTest {
   @Fact
   public nan(): void {
     const NaN = 0 / 0;
-    const validResult = z.nan(NaN);
-    const invalidResult = z.nan(69);
+    const validResult = ty.nan(NaN);
+    const invalidResult = ty.nan(69);
     Assert.true(validResult.success);
     Assert.notEqual(validResult.value, NaN); // cause nan lol
     assertSingleError(invalidResult, "nan", "69");
@@ -103,11 +103,11 @@ class ZTest {
 
   @Fact
   public primitive(): void {
-    const validResult = z.number(69);
-    const invalidResult = z.number(true);
+    const validResult = ty.number(69);
+    const invalidResult = ty.number(true);
     assertSuccessValue(validResult, 69);
     assertSingleError(invalidResult, "number", "true");
   }
 }
 
-export = ZTest;
+export = TyTest;
