@@ -20,12 +20,13 @@ jobs:
       - name: Install Dependencies
         run: |
           npm i
-          cd tests
-          npm i
-          cd ..
 
       - name: Run Tests
         run: |
+          npm run build
+          cd tests
+          npm i
+          cd ..
           npm test | tee test-output.txt
           output=$(<test-output.txt)
           cleaned_output=$(echo "$output" | sed 's/\x1b\[[0-9;]*m//g')
