@@ -1,6 +1,6 @@
 import { primitiveGuards } from "./primitives";
-import { guard, success, failure, ROOT_PATH, pathJoin } from "./utility";
-import type { Guard, InferGuard } from "./types";
+import { guard, success, failure, ROOT_PATH, pathJoin, guardError } from "./utility";
+import type { Guard, GuardError, InferGuard } from "./types";
 
 type IndexType = number | string;
 type ElementType<A extends any[]> = A extends (infer E)[] ? E : never;
@@ -20,7 +20,7 @@ function range(min: number, max: number): Guard<number> {
   return guard(
     typeName,
     (value, path = ROOT_PATH) => {
-      const primitiveResult = primitiveGuards.number(value);
+      const primitiveResult = primitiveGuards.number(value, path);
       return primitiveResult.success && primitiveResult.value >= min && primitiveResult.value <= max
         ? success(primitiveResult.value)
         : failure(path, typeName, value)
@@ -33,10 +33,17 @@ function intersection<T extends Guard<any>[]>(...guards: T): Guard<UnionToInters
   return guard(
     typeName,
     (value, path = ROOT_PATH) => {
-      const results = guards.map(guard => guard(value))
-      return results.some(result => !result.success)
-        ? failure(path, typeName, value)
-        : success(value as never);
+      const results = guards.map(guard => guard(value, path))
+      const errors: GuardError[] = [];
+      for (const intersectionGuard of results) {
+        if (intersectionGuard.success) continue;
+        for (const typeError of intersectionGuard.errors)
+          errors.push(typeError);
+      }
+
+      return errors.isEmpty()
+        ? success(value as never)
+        : failure(errors);
     }
   );
 }
@@ -46,7 +53,7 @@ function union<T extends Guard<any>[]>(...guards: T): Guard<InferGuard<ElementTy
   return guard(
     typeName,
     (value, path = ROOT_PATH) => {
-      const results = guards.map(guard => guard(value))
+      const results = guards.map(guard => guard(value, path))
       return results.every(result => !result.success)
         ? failure(path, typeName, value)
         : success(value as never);
@@ -57,19 +64,25 @@ function union<T extends Guard<any>[]>(...guards: T): Guard<InferGuard<ElementTy
 function object<T extends Record<IndexType, Guard<any>>, Name extends string>(guardRecord: T, typeName: Name = "AnonymousObject" as never): Guard<{ [K in keyof T]: InferGuard<T[K]> }> {
   return guard(
     typeName,
-    (value, path = pathJoin(ROOT_PATH, typeName)) => {
+    (value, path = typeName) => {
+      if (path === ROOT_PATH)
+        path = typeName;
       if (!typeIs(value, "table"))
         return failure(path, typeName, value);
 
+      const errors: GuardError[] = [];
       for (const [fieldName, guard] of pairs(guardRecord)) {
-        const result = (guard as Guard<T[keyof T]>)((value as T)[fieldName as keyof T]);
+        const fieldPath = pathJoin(path, fieldName as string);
+        const result = (guard as Guard<T[keyof T]>)((value as T)[fieldName as keyof T], fieldPath);
         if (result.success) continue;
 
-        const fieldPath = pathJoin(path, fieldName as string);
-        return failure(fieldPath, result.errors[0].expected, result.errors[0].actual, result.errors[0].message);
+        for (const fieldError of result.errors)
+          errors.push(fieldError);
       }
 
-      return success(value as never);
+      return errors.isEmpty()
+        ? success(value as never)
+        : failure(errors);
     }
   );
 }

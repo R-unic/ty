@@ -1,6 +1,6 @@
 import repr, { type ReprOptions } from "@rbxts/repr";
 
-import type { Guard, ValidationResult, ValidationSuccess, ValidationFailure } from "./types";
+import type { Guard, ValidationResult, ValidationSuccess, ValidationFailure, GuardError } from "./types";
 
 export const ROOT_PATH = "$";
 
@@ -20,18 +20,22 @@ export function success<T>(value: T): ValidationSuccess<T> {
   };
 }
 
-export function failure(path: string, expected: string, actual: unknown, message?: string): ValidationFailure {
+export function failure(errors: GuardError[]): ValidationFailure;
+export function failure(path: string, expected: string, actual: unknown, message?: string): ValidationFailure;
+export function failure(errors: GuardError[] | string, expected?: string, actual?: unknown, message?: string): ValidationFailure {
   return {
     success: false,
-    errors: [{
-      path,
-      expected,
-      actual,
-      message: message ?? `Expected '${expected}', got: ${repr(actual, REPR_OPTIONS)}`
-    }]
+    errors: typeIs(errors, "string") ? [guardError(errors, expected!, actual, message)] : errors
+  };
+}
+
+export function guardError(path: string, expected: string, actual: unknown, message?: string): GuardError {
+  return {
+    path, expected, actual,
+    message: message ?? `Expected '${expected}', got: ${repr(actual, REPR_OPTIONS)}` + (path !== ROOT_PATH && path !== expected ? ` (${path})` : "")
   };
 }
 
 export function pathJoin(...paths: string[]): string {
-  return paths.filter(p => p !== ROOT_PATH).join("/");
+  return paths.filter(p => p !== ROOT_PATH).map(p => p.match("(\&|\|)")[0] !== undefined ? `(${p})` : p).join(".");
 }

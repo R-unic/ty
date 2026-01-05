@@ -11,10 +11,12 @@ function assertSuccessType(result: ValidationResult<any>, typeName: keyof Checka
   Assert.isCheckableType(result.value, typeName);
 }
 
-function assertSingleError(result: ValidationResult<unknown>, expectedTypeName: string, expectedValueText: string): void {
+function assertSingleError(result: ValidationResult<unknown>, expectedTypeName: string, expectedValueText: string, expectedPath?: string): void {
   Assert.false(result.success);
   Assert.single(result.errors);
-  Assert.equal(`Expected '${expectedTypeName}', got: ${expectedValueText}`, result.errors[0].message);
+
+  const pathText = expectedPath !== undefined ? " (" + expectedPath + ")" : "";
+  Assert.equal(`Expected '${expectedTypeName}', got: ${expectedValueText}${pathText}`, result.errors[0].message);
 }
 
 class ZTest {
@@ -28,7 +30,7 @@ class ZTest {
     const invalidResult = guard("abc");
     const invalidResult2 = guard({});
     assertSingleError(invalidResult, "Foo", "\"abc\"");
-    assertSingleError(invalidResult2, "string", "nil");
+    assertSingleError(invalidResult2, "string", "nil", "Foo.foo");
     assertSuccessType(validResult, "table");
   }
 
@@ -45,8 +47,19 @@ class ZTest {
 
     const validResult = guard({ a: "abc", b: 69 });
     const invalidResult = guard({ a: "abc" });
+    const invalidResult2 = guard({ c: 69 });
+    const invalidResult3 = guard({ a: 69, b: "abc" });
     assertSuccessType(validResult, "table");
-    assertSingleError(invalidResult, "Foo & Bar", "{\n   a = \"abc\"\n}");
+    assertSingleError(invalidResult, "number", "nil", "Bar.b");
+    Assert.false(invalidResult2.success);
+    Assert.count(2, invalidResult2.errors);
+    Assert.equal("Expected 'string', got: nil (Foo.a)", invalidResult2.errors[0].message);
+    Assert.equal("Expected 'number', got: nil (Bar.b)", invalidResult2.errors[1].message);
+
+    Assert.false(invalidResult3.success);
+    Assert.count(2, invalidResult3.errors);
+    Assert.equal("Expected 'string', got: 69 (Foo.a)", invalidResult3.errors[0].message);
+    Assert.equal(`Expected 'number', got: "abc" (Bar.b)`, invalidResult3.errors[1].message);
   }
 
   @Fact
