@@ -21,6 +21,24 @@ import z from "@rbxts/z";
 }
 ```
 
+## Literals
+
+```ts
+import z from "@rbxts/z";
+
+const abcGuard = z.literal("abc");
+{
+  const result = abcGuard("abc");
+  if (result.success)
+    print(result.value) // abc
+}
+{
+  const result = abcGuard(69);
+  if (!result.success)
+    print(result.errors[0].message) // Expected '"abc"', got: 69
+}
+```
+
 ## Objects
 
 ```ts
