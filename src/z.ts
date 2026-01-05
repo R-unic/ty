@@ -3,6 +3,7 @@ import { guard, success, failure, ROOT_PATH, pathJoin, guardError } from "./util
 import type { Guard, GuardError, InferGuard } from "./types";
 
 type IndexType = number | string;
+type LiteralBase = string | number | boolean;
 type ElementType<A extends any[]> = A extends (infer E)[] ? E : never;
 
 const nan = guard(
@@ -14,6 +15,22 @@ const nan = guard(
       : failure(path, "nan", value)
   }
 );
+
+
+function literal<T extends LiteralBase>(literalValue: T): Guard<T> {
+  const typeName = typeIs(literalValue, "string") ? '"' + literalValue + '"' : tostring(literalValue);
+  const primitiveType = typeOf(literalValue) as keyof typeof primitiveGuards;
+
+  return guard(
+    typeName,
+    (value, path = ROOT_PATH) => {
+      const primitiveResult = primitiveGuards[primitiveType](value, path);
+      return primitiveResult.success && primitiveResult.value === literalValue
+        ? success(primitiveResult.value as T)
+        : failure(path, typeName, value)
+    }
+  );
+}
 
 function range(min: number, max: number): Guard<number> {
   const typeName = `number (${min}-${max})`;
@@ -91,6 +108,7 @@ const z = {
   ...primitiveGuards,
   nan,
   range,
+  literal,
   intersection,
   union,
   object
