@@ -1,9 +1,14 @@
 import { Assert, Fact } from "@rbxts/runit";
 import z, { ValidationResult } from "@rbxts/z";
 
-function assertSuccess<T>(result: ValidationResult<T>, value: T): void {
+function assertSuccessValue<T>(result: ValidationResult<T>, value: T): void {
   Assert.true(result.success);
   Assert.equal(value, result.value);
+}
+
+function assertSuccessType(result: ValidationResult<any>, typeName: keyof CheckableTypes): void {
+  Assert.true(result.success);
+  Assert.isCheckableType(result.value, typeName);
 }
 
 function assertSingleError(result: ValidationResult<unknown>, expectedTypeName: string, expectedValueText: string): void {
@@ -14,8 +19,34 @@ function assertSingleError(result: ValidationResult<unknown>, expectedTypeName: 
 
 class ZTest {
   @Fact
-  public intersection(): void {
+  public object(): void {
+    const guard = z.object({
+      foo: z.string
+    }, "Foo");
 
+    const validResult = guard({ foo: "bar" });
+    const invalidResult = guard("abc");
+    const invalidResult2 = guard({});
+    assertSingleError(invalidResult, "Foo", "\"abc\"");
+    assertSingleError(invalidResult2, "string", "nil");
+    assertSuccessType(validResult, "table");
+  }
+
+  @Fact
+  public intersection(): void {
+    const guard = z.intersection(
+      z.object({
+        a: z.string
+      }, "Foo"),
+      z.object({
+        b: z.number
+      }, "Bar")
+    );
+
+    const validResult = guard({ a: "abc", b: 69 });
+    const invalidResult = guard({ a: "abc" });
+    assertSuccessType(validResult, "table");
+    assertSingleError(invalidResult, "Foo & Bar", "{\n   a = \"abc\"\n}");
   }
 
   @Fact
@@ -24,8 +55,8 @@ class ZTest {
     const validResult = guard(69);
     const validResult2 = guard(true);
     const invalidResult = guard("abc");
-    assertSuccess(validResult, 69);
-    assertSuccess(validResult2, true);
+    assertSuccessValue(validResult, 69);
+    assertSuccessValue(validResult2, true);
     assertSingleError(invalidResult, "number | boolean", "\"abc\"");
   }
 
@@ -34,7 +65,7 @@ class ZTest {
     const guard = z.range(0, 100);
     const validResult = guard(69);
     const invalidResult = guard(255);
-    assertSuccess(validResult, 69);
+    assertSuccessValue(validResult, 69);
     assertSingleError(invalidResult, "number (0-100)", "255");
   }
 
@@ -52,7 +83,7 @@ class ZTest {
   public primitive(): void {
     const validResult = z.number(69);
     const invalidResult = z.number(true);
-    assertSuccess(validResult, 69);
+    assertSuccessValue(validResult, 69);
     assertSingleError(invalidResult, "number", "true");
   }
 }

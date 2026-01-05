@@ -20,7 +20,8 @@ jobs:
       - name: Install Dependencies
         run: |
           npm i
-          cd tests && npm i
+          cd tests
+          npm i
           cd ..
 
       - name: Run Tests
