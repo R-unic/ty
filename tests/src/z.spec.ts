@@ -83,6 +83,15 @@ class ZTest {
   }
 
   @Fact
+  public literal(): void {
+    const abcGuard = z.literal("abc");
+    const validResult = abcGuard("abc");
+    const invalidResult = abcGuard(69);
+    assertSuccessValue(validResult, "abc");
+    assertSingleError(invalidResult, "\"abc\"", "69");
+  }
+
+  @Fact
   public nan(): void {
     const NaN = 0 / 0;
     const validResult = z.nan(NaN);
