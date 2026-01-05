@@ -7,15 +7,15 @@ Alternative to `@rbxts/t`.
 ## Basics
 
 ```ts
-import z from "@rbxts/ty";
+import ty from "@rbxts/ty";
 
 {
-  const result = z.string("hello!");
+  const result = ty.string("hello!");
   if (result.success)
     print(result.value) // hello!
 }
 {
-  const result = z.string(69);
+  const result = ty.string(69);
   if (!result.success)
     print(result.errors[0].message) // Expected 'string', got: 69
 }
@@ -24,9 +24,9 @@ import z from "@rbxts/ty";
 ## Literals
 
 ```ts
-import z from "@rbxts/ty";
+import ty from "@rbxts/ty";
 
-const abcGuard = z.literal("abc");
+const abcGuard = ty.literal("abc");
 {
   const result = abcGuard("abc");
   if (result.success)
@@ -42,9 +42,9 @@ const abcGuard = z.literal("abc");
 ## Objects
 
 ```ts
-const weaponGuard = z.object({
-  name: z.string,
-  damage: z.number
+const weaponGuard = ty.object({
+  name: ty.string,
+  damage: ty.number
 }, "Weapon");
 
 {
@@ -70,7 +70,7 @@ const weaponGuard = z.object({
 ## Unions
 
 ```ts
-const isStringOrNumber = z.union(z.string, z.number);
+const isStringOrNumber = ty.union(ty.string, ty.number);
 
 {
   const result = isStringOrNumber(69);
@@ -92,12 +92,12 @@ const isStringOrNumber = z.union(z.string, z.number);
 ## Intersections
 
 ```ts
-const isFooBar = z.intersection(
-  z.object({
-    a: z.string
+const isFooBar = ty.intersection(
+  ty.object({
+    a: ty.string
   }, "Foo"),
-  z.object({
-    b: z.number
+  ty.object({
+    b: ty.number
   }, "Bar")
 );
 
