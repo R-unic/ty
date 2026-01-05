@@ -1,7 +1,8 @@
 import { primitiveGuards } from "./primitives";
-import { guard, success, failure, ROOT_PATH } from "./utility";
+import { guard, success, failure, ROOT_PATH, pathJoin } from "./utility";
 import type { Guard, InferGuard } from "./types";
 
+type IndexType = number | string;
 type ElementType<A extends any[]> = A extends (infer E)[] ? E : never;
 
 const nan = guard(
@@ -53,12 +54,33 @@ function union<T extends Guard<any>[]>(...guards: T): Guard<InferGuard<ElementTy
   );
 }
 
+function object<T extends Record<IndexType, Guard<any>>, Name extends string>(guardRecord: T, typeName: Name = "AnonymousObject" as never): Guard<{ [K in keyof T]: InferGuard<T[K]> }> {
+  return guard(
+    typeName,
+    (value, path = pathJoin(ROOT_PATH, typeName)) => {
+      if (!typeIs(value, "table"))
+        return failure(path, typeName, value);
+
+      for (const [fieldName, guard] of pairs(guardRecord)) {
+        const result = (guard as Guard<T[keyof T]>)((value as T)[fieldName as keyof T]);
+        if (result.success) continue;
+
+        const fieldPath = pathJoin(path, fieldName as string);
+        return failure(fieldPath, result.errors[0].expected, result.errors[0].actual, result.errors[0].message);
+      }
+
+      return success(value as never);
+    }
+  );
+}
+
 const z = {
   ...primitiveGuards,
   nan,
   range,
   intersection,
-  union
+  union,
+  object
 };
 table.freeze(z);
 

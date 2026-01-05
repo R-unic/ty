@@ -31,3 +31,7 @@ export function failure(path: string, expected: string, actual: unknown, message
     }]
   };
 }
+
+export function pathJoin(...paths: string[]): string {
+  return paths.filter(p => p !== ROOT_PATH).join("/");
+}
