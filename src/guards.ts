@@ -1,12 +1,16 @@
+import repr from "@rbxts/repr";
+
 import { primitiveGuards } from "./primitives";
-import { guard, success, failure, ROOT_PATH, pathJoin, guardError } from "./utility";
+import { guard, success, failure, pathJoin, ROOT_PATH, REPR_OPTIONS } from "./utility";
 import type { Guard, GuardError, InferGuard } from "./types";
 
 type IndexType = number | string;
 type LiteralBase = string | number | boolean;
 type ElementType<A extends any[]> = A extends (infer E)[] ? E : never;
 
-const nan = guard(
+function assertIs<T>(value: unknown): asserts value is T { }
+
+export const nan = guard(
   "nan",
   (value, path = ROOT_PATH) => {
     const primitiveResult = primitiveGuards.number(value);
@@ -16,22 +20,23 @@ const nan = guard(
   }
 );
 
-function literal<T extends LiteralBase>(literalValue: T): Guard<T> {
+export function literal<T extends LiteralBase>(literalValue: T): Guard<T> {
   const typeName = typeIs(literalValue, "string") ? '"' + literalValue + '"' : tostring(literalValue);
   const primitiveType = typeOf(literalValue) as keyof typeof primitiveGuards;
 
   return guard(
     typeName,
     (value, path = ROOT_PATH) => {
-      const primitiveResult = primitiveGuards[primitiveType](value, path);
-      return primitiveResult.success && primitiveResult.value === literalValue
+      const primitiveGuard = primitiveGuards?.[primitiveType]
+      const primitiveResult = primitiveGuard?.(value, path);
+      return primitiveResult !== undefined && primitiveResult.success && primitiveResult.value === literalValue
         ? success(primitiveResult.value as T)
         : failure(path, typeName, value)
     }
   );
 }
 
-function range(min: number, max: number): Guard<number> {
+export function range(min: number, max: number): Guard<number> {
   const typeName = `number (${min}-${max})`;
   return guard(
     typeName,
@@ -44,7 +49,30 @@ function range(min: number, max: number): Guard<number> {
   );
 }
 
-function intersection<T extends Guard<any>[]>(...guards: T): Guard<UnionToIntersection<InferGuard<T[number]>>> {
+export function instanceClass<K extends keyof Instances>(className: K): Guard<Instances[K], K> {
+  return guard(
+    className,
+    (value, path = ROOT_PATH) => {
+      assertIs<Instances[K]>(value);
+      return typeIs(value, "Instance") && value.ClassName === className
+        ? success(value)
+        : failure(path, className, value, `Expected instance of class '${className}', got: ${repr(value, REPR_OPTIONS)}`)
+    }
+  );
+}
+
+export function instanceIsA<K extends keyof Instances>(className: K): Guard<Instances[K], K> {
+  return guard(
+    className,
+    (value, path = ROOT_PATH) => {
+      return typeIs(value, "Instance") && value.IsA(className)
+        ? success(value)
+        : failure(path, className, value, `Expected instance extending '${className}', got: ${repr(value, REPR_OPTIONS)}`)
+    }
+  );
+}
+
+export function intersection<T extends Guard<any>[]>(...guards: T): Guard<UnionToIntersection<InferGuard<T[number]>>> {
   const typeName = guards.join(" & ");
   return guard(
     typeName,
@@ -64,7 +92,7 @@ function intersection<T extends Guard<any>[]>(...guards: T): Guard<UnionToInters
   );
 }
 
-function union<T extends Guard<any>[]>(...guards: T): Guard<InferGuard<ElementType<T>>> {
+export function union<T extends Guard<any>[]>(...guards: T): Guard<InferGuard<ElementType<T>>> {
   const typeName = guards.join(" | ");
   return guard(
     typeName,
@@ -77,7 +105,7 @@ function union<T extends Guard<any>[]>(...guards: T): Guard<InferGuard<ElementTy
   );
 }
 
-function object<T extends Record<IndexType, Guard<any>>, Name extends string>(guardRecord: T, typeName: Name = "AnonymousObject" as never): Guard<{ [K in keyof T]: InferGuard<T[K]> }> {
+export function object<T extends Record<IndexType, Guard<unknown>>, Name extends string>(guardRecord: T, typeName = "AnonymousObject" as Name): Guard<{ [K in keyof T]: InferGuard<T[K]> }> {
   return guard(
     typeName,
     (value, path = typeName) => {
@@ -102,16 +130,3 @@ function object<T extends Record<IndexType, Guard<any>>, Name extends string>(gu
     }
   );
 }
-
-const ty = {
-  ...primitiveGuards,
-  nan,
-  range,
-  literal,
-  intersection,
-  union,
-  object
-};
-table.freeze(ty);
-
-export = ty;

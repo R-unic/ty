@@ -1,23 +1,7 @@
 import { Assert, Fact } from "@rbxts/runit";
-import ty, { ValidationResult } from "@rbxts/ty";
+import ty from "@rbxts/ty";
 
-function assertSuccessValue<T>(result: ValidationResult<T>, value: T): void {
-  Assert.true(result.success);
-  Assert.equal(value, result.value);
-}
-
-function assertSuccessType(result: ValidationResult<any>, typeName: keyof CheckableTypes): void {
-  Assert.true(result.success);
-  Assert.isCheckableType(result.value, typeName);
-}
-
-function assertSingleError(result: ValidationResult<unknown>, expectedTypeName: string, expectedValueText: string, expectedPath?: string): void {
-  Assert.false(result.success);
-  Assert.single(result.errors);
-
-  const pathText = expectedPath !== undefined ? " (" + expectedPath + ")" : "";
-  Assert.equal(`Expected '${expectedTypeName}', got: ${expectedValueText}${pathText}`, result.errors[0].message);
-}
+import { assertSingleError, assertSingleErrorWhoCaresAboutTheMessage, assertSuccessType, assertSuccessValue } from "./utility";
 
 class TyTest {
   @Fact
@@ -71,6 +55,32 @@ class TyTest {
     assertSuccessValue(validResult, 69);
     assertSuccessValue(validResult2, true);
     assertSingleError(invalidResult, "number | boolean", "\"abc\"");
+  }
+
+  @Fact
+  public instanceIsA(): void {
+    const className = "BasePart";
+    const guard = ty.instanceIsA(className);
+    const validResult = guard(new Instance("Part"));
+    const validResult2 = guard(new Instance("MeshPart"));
+    const invalidResult = guard("abc");
+    const invalidResult2 = guard(new Instance("ScreenGui"));
+    assertSuccessType(validResult, "Instance");
+    assertSuccessType(validResult2, "Instance");
+    assertSingleErrorWhoCaresAboutTheMessage(invalidResult);
+    assertSingleErrorWhoCaresAboutTheMessage(invalidResult2);
+  }
+
+  @Fact
+  public instanceClass(): void {
+    const className = "Part";
+    const guard = ty.instanceIsA(className);
+    const validResult = guard(new Instance("Part"));
+    const invalidResult = guard("abc");
+    const invalidResult2 = guard(new Instance("MeshPart"));
+    assertSuccessType(validResult, "Instance");
+    assertSingleErrorWhoCaresAboutTheMessage(invalidResult);
+    assertSingleErrorWhoCaresAboutTheMessage(invalidResult2);
   }
 
   @Fact

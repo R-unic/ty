@@ -3,8 +3,7 @@ import repr, { type ReprOptions } from "@rbxts/repr";
 import type { Guard, ValidationResult, ValidationSuccess, ValidationFailure, GuardError } from "./types";
 
 export const ROOT_PATH = "$";
-
-const REPR_OPTIONS: ReprOptions = { pretty: true };
+export const REPR_OPTIONS: ReprOptions = { pretty: true };
 
 export function guard<T, Name extends string>(typeName: Name, callback: (value: unknown, path?: string) => ValidationResult<T>): Guard<T, Name> {
   return setmetatable({ typeName }, {
@@ -29,13 +28,24 @@ export function failure(errors: GuardError[] | string, expected?: string, actual
   };
 }
 
-export function guardError(path: string, expected: string, actual: unknown, message?: string): GuardError {
+export function guardError(
+  path: string,
+  expected: string,
+  actual: unknown,
+  message = `Expected '${expected}', got: ${repr(actual, REPR_OPTIONS)}`
+): GuardError {
   return {
     path, expected, actual,
-    message: message ?? `Expected '${expected}', got: ${repr(actual, REPR_OPTIONS)}` + (path !== ROOT_PATH && path !== expected ? ` (${path})` : "")
+    message: message + (path !== ROOT_PATH && path !== expected ? ` (${path})` : "")
   };
 }
 
 export function pathJoin(...paths: string[]): string {
-  return paths.filter(p => p !== ROOT_PATH).map(p => p.match("(\&|\|)")[0] !== undefined ? `(${p})` : p).join(".");
+  const parts: string[] = [];
+  for (const path of paths) {
+    if (path === ROOT_PATH) continue;
+    const wrap = path.match("(\&|\|)")[0] !== undefined;
+    parts.push(wrap ? `(${path})` : path);
+  }
+  return parts.join(".");
 }
