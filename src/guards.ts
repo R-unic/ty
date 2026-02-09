@@ -39,6 +39,24 @@ export const int: Guard<number, "int"> = guard(
   }
 );
 
+export const negative: Guard<number, "-number"> = guard(
+  "-number",
+  (value, path = ROOT_PATH) => {
+    return typeIs(value, "number") && value < 0
+      ? success(value)
+      : failure(path, "-number", value)
+  }
+);
+
+export const positive: Guard<number, "+number"> = guard(
+  "+number",
+  (value, path = ROOT_PATH) => {
+    return typeIs(value, "number") && value >= 0
+      ? success(value)
+      : failure(path, "+number", value)
+  }
+);
+
 export function literal<T extends LiteralBase>(literalValue: T): Guard<T> {
   const typeName = typeIs(literalValue, "string") ? '"' + literalValue + '"' : tostring(literalValue);
   const primitiveType = typeOf(literalValue) as keyof typeof primitiveGuards;

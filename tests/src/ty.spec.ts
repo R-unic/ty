@@ -128,6 +128,24 @@ class TyTest {
   }
 
   @Fact
+  public positive(): void {
+    const validResult = ty.positive(69);
+    const validResult2 = ty.positive(0);
+    const invalidResult = ty.positive(-69);
+    assertSuccessValue(validResult, 69);
+    assertSuccessValue(validResult2, 0);
+    assertSingleError(invalidResult, "+number", "-69");
+  }
+
+  @Fact
+  public negative(): void {
+    const validResult = ty.negative(-69);
+    const invalidResult = ty.negative(69);
+    assertSuccessValue(validResult, -69);
+    assertSingleError(invalidResult, "-number", "69");
+  }
+
+  @Fact
   public primitive(): void {
     const validResult = ty.number(69);
     const invalidResult = ty.number(true);
