@@ -10,7 +10,16 @@ type ElementType<A extends any[]> = A extends (infer E)[] ? E : never;
 
 function assertIs<T>(value: unknown): asserts value is T { }
 
-export const nan = guard(
+export const defined: Guard<defined, "defined"> = guard(
+  "defined",
+  (value, path = ROOT_PATH) => {
+    return value !== undefined
+      ? success(value!)
+      : failure(path, "defined", value)
+  }
+);
+
+export const nan: Guard<number, "nan"> = guard(
   "nan",
   (value, path = ROOT_PATH) => {
     const primitiveResult = primitiveGuards.number(value);

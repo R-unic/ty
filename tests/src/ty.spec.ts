@@ -112,6 +112,14 @@ class TyTest {
   }
 
   @Fact
+  public defined(): void {
+    const validResult = ty.defined(69);
+    const invalidResult = ty.defined(undefined);
+    assertSuccessValue(validResult, 69);
+    assertSingleError(invalidResult, "defined", "nil");
+  }
+
+  @Fact
   public primitive(): void {
     const validResult = ty.number(69);
     const invalidResult = ty.number(true);

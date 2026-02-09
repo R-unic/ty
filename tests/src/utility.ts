@@ -1,24 +1,44 @@
+import { Modding } from "@flamework/core";
 import { Assert } from "@rbxts/runit";
 
 import type { ValidationFailure, ValidationResult } from "@rbxts/ty";
 
-export function assertSuccessValue<T>(result: ValidationResult<T>, value: T): void {
-  Assert.true(result.success);
-  Assert.equal(value, result.value);
+type CallsiteMetadata = Modding.CallerMany<"line" | "character">;
+
+/** @metadata macro */
+export function assertSuccessValue<T>(result: ValidationResult<T>, value: T, meta?: CallsiteMetadata): void {
+  Assert.true(result.success, meta);
+  Assert.equal(value, result.value, meta);
 }
 
-export function assertSuccessType(result: ValidationResult<any>, typeName: keyof CheckableTypes): void {
-  Assert.true(result.success);
-  Assert.isCheckableType(result.value, typeName);
+/** @metadata macro */
+export function assertSuccessType(
+  result: ValidationResult<any>,
+  typeName: keyof CheckableTypes,
+  meta?: CallsiteMetadata
+): void {
+  Assert.true(result.success, meta);
+  Assert.isCheckableType(result.value, typeName, meta);
 }
 
-export function assertSingleError(result: ValidationResult<unknown>, expectedTypeName: string, expectedValueText: string, expectedPath?: string): asserts result is ValidationFailure {
-  assertSingleErrorWhoCaresAboutTheMessage(result);
+/** @metadata macro */
+export function assertSingleError(
+  result: ValidationResult<unknown>,
+  expectedTypeName: string,
+  expectedValueText: string,
+  expectedPath?: string,
+  meta?: CallsiteMetadata
+): asserts result is ValidationFailure {
+  assertSingleErrorWhoCaresAboutTheMessage(result, meta);
   const pathText = expectedPath !== undefined ? " (" + expectedPath + ")" : "";
-  Assert.equal(`Expected '${expectedTypeName}', got: ${expectedValueText}${pathText}`, result.errors[0].message);
+  Assert.equal(`Expected '${expectedTypeName}', got: ${expectedValueText}${pathText}`, result.errors[0].message, meta);
 }
 
-export function assertSingleErrorWhoCaresAboutTheMessage(result: ValidationResult<unknown>): asserts result is ValidationFailure {
-  Assert.false(result.success);
-  Assert.single(result.errors);
+/** @metadata macro */
+export function assertSingleErrorWhoCaresAboutTheMessage(
+  result: ValidationResult<unknown>,
+  meta?: CallsiteMetadata
+): asserts result is ValidationFailure {
+  Assert.false(result.success, meta);
+  Assert.single(result.errors, meta);
 }
