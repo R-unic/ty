@@ -120,6 +120,14 @@ class TyTest {
   }
 
   @Fact
+  public int(): void {
+    const validResult = ty.int(69);
+    const invalidResult = ty.int(69.420);
+    assertSuccessValue(validResult, 69);
+    assertSingleError(invalidResult, "int", "69.42");
+  }
+
+  @Fact
   public primitive(): void {
     const validResult = ty.number(69);
     const invalidResult = ty.number(true);

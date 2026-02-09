@@ -8,6 +8,8 @@ type IndexType = number | string;
 type LiteralBase = string | number | boolean;
 type ElementType<A extends any[]> = A extends (infer E)[] ? E : never;
 
+const { floor } = math;
+
 function assertIs<T>(value: unknown): asserts value is T { }
 
 export const defined: Guard<defined, "defined"> = guard(
@@ -22,10 +24,18 @@ export const defined: Guard<defined, "defined"> = guard(
 export const nan: Guard<number, "nan"> = guard(
   "nan",
   (value, path = ROOT_PATH) => {
-    const primitiveResult = primitiveGuards.number(value);
-    return primitiveResult.success && value !== value
-      ? success(primitiveResult.value)
+    return typeIs(value, "number") && value !== value
+      ? success(value)
       : failure(path, "nan", value)
+  }
+);
+
+export const int: Guard<number, "int"> = guard(
+  "int",
+  (value, path = ROOT_PATH) => {
+    return typeIs(value, "number") && floor(value) === value
+      ? success(value)
+      : failure(path, "int", value)
   }
 );
 
